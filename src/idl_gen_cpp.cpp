@@ -790,7 +790,7 @@ class CppGenerator : public BaseGenerator {
           code += cpp_qualified_name + ">(" + field.name + "()->Data()); }\n";
         }
         // Generate a comparison function for this field if it is a key.
-        if (field.key) {
+        if (false) {
           code += "  bool KeyCompareLessThan(const " + struct_def.name;
           code += " *o) const { return ";
           if (field.value.type.base_type == BASE_TYPE_STRING) code += "*";
@@ -869,6 +869,166 @@ class CppGenerator : public BaseGenerator {
     }
     code += prefix + "verifier.EndTable()";
     code += ";\n  }\n";
+
+    // Byte order methods
+    code += "  void ByteOrderFields() {\n";
+    prefix = "    ";
+    for (auto it = struct_def.fields.vec.begin();
+         it != struct_def.fields.vec.end(); ++it) {
+      auto &field = **it;
+      if (!field.deprecated) {
+        switch (field.value.type.base_type) {
+          case BASE_TYPE_DOUBLE:
+          case BASE_TYPE_LONG:
+            code += prefix;
+            code += "flatbuffers::ByteOrderScalar<int64_t>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+            code += prefix;
+            code += "flatbuffers::ByteOrderScalar<double>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    code += "  }\n";
+
+    code += "  void FlatbufferOrderFields() {\n";
+    for (auto it = struct_def.fields.vec.begin();
+         it != struct_def.fields.vec.end(); ++it) {
+      auto &field = **it;
+      if (!field.deprecated) {
+        switch (field.value.type.base_type) {
+          case BASE_TYPE_DOUBLE:
+          case BASE_TYPE_LONG:
+            code += prefix;
+            code += "flatbuffers::FlatbufferOrderScalar<int64_t>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+            code += prefix;
+            code += "flatbuffers::FlatbufferOrderScalar<double>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    code += "  }\n";
+
+    FieldDef *first_key_field, *last_key_field;
+    FieldDef *first_val_field, *last_val_field;
+    std::vector<FieldDef *> key_vec_fields;
+    bool key_field_found = false;
+    for (auto it = struct_def.fields.vec.begin();
+         it != struct_def.fields.vec.end(); ++it) {
+      auto &field = **it;
+      if (!field.deprecated && field.key) {
+        first_key_field = &field;
+        key_field_found = true;
+        break;
+      }
+    }
+
+    if (key_field_found) {
+      // Compute {first, last} x {key, val} fields
+      last_key_field = first_key_field;
+      first_val_field = last_val_field = nullptr;
+      for (auto it = struct_def.fields.vec.begin();
+           it != struct_def.fields.vec.end(); ++it) {
+        auto &field = **it;
+        if (!field.deprecated) {
+          if (field.key) {
+            last_key_field = &field;
+            // strings in the key field are split as
+            // follows:
+            // key: ..actual-bytes..
+            // value: <length, pointer-to-actual-bytes>
+            //
+            // Therefore its necessary to modify both
+            // the first/last key and value.
+            if (field.value.type.base_type == BASE_TYPE_STRING
+                || field.value.type.base_type == BASE_TYPE_VECTOR) {
+              key_vec_fields.push_back(&field);
+            }
+          } else {
+            if (!first_val_field) {
+              first_val_field = &field;
+            }
+            last_val_field = &field;
+          }
+        }
+      }
+      // GetKey()
+      code += "  const uint8_t *GetKey() const {\n";
+      code += prefix;
+      code += "return GetAddressOf("
+                + GenFieldOffsetName(*first_key_field) + ");\n";
+      code += "  }\n";
+
+      // GetKeySize()
+      code += "  size_t GetKeySize() const {\n";
+      code += prefix;
+      code += "return GetAddressOf("
+                + GenFieldOffsetName(*last_key_field) + ") -\n";
+      code += prefix + "  ";
+      code += "GetAddressOf("
+                + GenFieldOffsetName(*first_key_field) + ") +\n";
+      code += prefix + "  ";
+      code += "sizeof("
+                + GenTypeGet(last_key_field->value.type, "", "", "", true)
+                + ");\n";
+      code += "  }\n";
+
+      // GetValue()
+      if (!first_val_field && key_vec_fields.size() == 0) {
+        code += "  const uint8_t *GetValue() const {\n";
+        code += prefix;
+        code += "  return nullptr;";
+        code += "  }\n";
+        code += "  size_t GetValueSize() const {\n";
+        code += prefix;
+        code += "  return 0;";
+        code += "  }\n";
+      } else {
+        FieldDef *spilled_val_field = first_val_field;
+        if (key_vec_fields.size()) {
+          spilled_val_field = key_vec_fields[0];
+        }
+        code += "  const uint8_t *GetValue() const {\n";
+        code += prefix;
+        code += "return GetAddressOf("
+                  + GenFieldOffsetName(*spilled_val_field) + ");\n";
+        code += "  }\n";
+
+        // GetValueSize()
+        if (last_val_field) {
+          code += "  size_t GetValueSize() const {\n";
+          code += prefix;
+          code += "return GetAddressOf("
+                    + GenFieldOffsetName(*last_val_field) + ") -\n";
+          code += prefix + "  ";
+          code += "GetAddressOf("
+                    + GenFieldOffsetName(*first_val_field) + ") +\n";
+          code += prefix + "  ";
+          code += "sizeof("
+                    + GenTypeGet(last_val_field->value.type, "", "", "", true)
+                    + ") +\n";
+          code += prefix + "  ";
+          if (!key_vec_fields.size()) {
+            code += "0;";
+          } else {
+            code += std::to_string(key_vec_fields.size())
+                    + " * sizeof("
+                    + GenTypeGet(spilled_val_field->value.type, "", "", "", true)
+                    + ");\n";
+          }
+          code += "  }\n";
+        }
+      }
+    }
 
     if (parser_.opts.generate_object_based_api) {
       // Generate the UnPack() pre declaration.

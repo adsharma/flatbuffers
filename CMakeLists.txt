@@ -64,6 +64,7 @@ set(FlatBuffers_Tests_SRCS
   tests/test.cpp
   # file generate by running compiler on tests/monster_test.fbs
   ${CMAKE_CURRENT_BINARY_DIR}/tests/monster_test_generated.h
+  ${CMAKE_CURRENT_BINARY_DIR}/tests/kvstore_test1_generated.h
 )
 
 set(FlatBuffers_Sample_Binary_SRCS
@@ -199,6 +200,7 @@ endfunction()
 
 if(FLATBUFFERS_BUILD_TESTS)
   compile_flatbuffers_schema_to_cpp(tests/monster_test.fbs)
+  compile_flatbuffers_schema_to_cpp(tests/kvstore_test1.fbs)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/tests)
   add_executable(flattests ${FlatBuffers_Tests_SRCS})
 

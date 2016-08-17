@@ -22,6 +22,7 @@
 #include "flatbuffers/util.h"
 
 #include "monster_test_generated.h"
+#include "kvstore_test1_generated.h"
 #include "namespace_test/namespace_test1_generated.h"
 #include "namespace_test/namespace_test2_generated.h"
 
@@ -1263,8 +1264,65 @@ void ConformTest() {
   test_conform("enum E:byte { B, A }", "values differ for enum");
 }
 
+void KeyComparisonTest() {
+  flatbuffers::FlatBufferBuilder b1, b2, b3;
+  kvstore::test1T row1, row2, row3;
+  row1.obj_id = 5;
+  row1.name = "foo";
+  row1.age = 23;
+  row1.score = 0.7;
+  row1.mydata = "abadgdsfa";
+  auto mloc = kvstore::Createtest1(b1, &row1);
+  kvstore::Finishtest1Buffer(b1, mloc);
+  flatbuffers::Verifier verifier(b1.GetBufferPointer(), b1.GetSize());
+  TEST_EQ(kvstore::Verifytest1Buffer(verifier), true);
+  auto obj1 = kvstore::Gettest1(b1.GetBufferPointer());
+
+  row2.obj_id = 2;
+  row2.name = "foobar";
+  row2.age = 24;
+  row2.score = 0.5;
+  row2.mydata = "iououoklj";
+  mloc = kvstore::Createtest1(b2, &row2);
+  kvstore::Finishtest1Buffer(b2, mloc);
+  auto obj2 = kvstore::Gettest1(b2.GetBufferPointer());
+
+  row3.obj_id = -8;
+  row3.name = "baz";
+  row3.age = 41;
+  row3.score = 0.8;
+  row3.mydata = "wreqwr";
+  mloc = kvstore::Createtest1(b3, &row3);
+  kvstore::Finishtest1Buffer(b3, mloc);
+  auto obj3 = kvstore::Gettest1(b3.GetBufferPointer());
+
+  TEST_EQ(obj1->GetKeySize(), 32);
+  TEST_EQ(obj2->GetKeySize(), 32);
+  TEST_EQ(obj3->GetKeySize(), 32);
+
+  const_cast<kvstore::test1 *>(obj1)->ByteOrderFields();
+  const_cast<kvstore::test1 *>(obj2)->ByteOrderFields();
+  const_cast<kvstore::test1 *>(obj3)->ByteOrderFields();
+
+  // <5, 23, 0.7> > <2, 24, 0.5>
+  TEST_EQ((memcmp(obj1->GetKey(), obj2->GetKey(), obj1->GetKeySize()) > 0),
+          true);
+  // <2, 24, 0.5> > <-8, 41, 0.8>
+  TEST_EQ((memcmp(obj2->GetKey(), obj3->GetKey(), obj2->GetKeySize()) > 0),
+          true);
+
+  const_cast<kvstore::test1 *>(obj1)->FlatbufferOrderFields();
+  const_cast<kvstore::test1 *>(obj2)->FlatbufferOrderFields();
+  const_cast<kvstore::test1 *>(obj3)->FlatbufferOrderFields();
+
+  TEST_EQ(obj1->obj_id(), 5);
+  TEST_EQ(obj2->obj_id(), 2);
+  TEST_EQ(obj3->obj_id(), -8);
+}
+
 int main(int /*argc*/, const char * /*argv*/[]) {
   // Run our various test suites:
+  KeyComparisonTest();
 
   std::string rawbuf;
   auto flatbuf = CreateFlatBufferTest(rawbuf);

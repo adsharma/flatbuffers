@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <memory>
 
+#include "flatbuffers/serialize.h"
+
 #ifdef _STLPORT_VERSION
   #define FLATBUFFERS_CPP98_STL
 #endif
@@ -200,6 +202,14 @@ template<typename T> T ReadScalar(const void *p) {
 
 template<typename T> void WriteScalar(void *p, T t) {
   *reinterpret_cast<T *>(p) = EndianScalar(t);
+}
+
+template<typename T> void ByteOrderScalar(void *p) {
+  return keyencoder::Serialize<T>(reinterpret_cast<T *>(p));
+}
+
+template<typename T> void FlatbufferOrderScalar(void *p) {
+  return keyencoder::Deserialize<T>(reinterpret_cast<T *>(p));
 }
 
 template<typename T> size_t AlignOf() {
