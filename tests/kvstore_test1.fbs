@@ -1,0 +1,11 @@
+namespace kvstore;
+
+table test1 (original_order) {
+  obj_id:long (key);
+  age:long (key);
+  score:double (key);
+  name:string;
+  mydata:string;
+}
+
+root_type test1;

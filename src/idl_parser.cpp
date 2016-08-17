@@ -665,8 +665,6 @@ CheckedError Parser::ParseField(StructDef &struct_def) {
     return Error("only non-scalar fields in tables may be 'required'");
   field->key = field->attributes.Lookup("key") != nullptr;
   if (field->key) {
-    if (struct_def.has_key)
-      return Error("only one field may be set as 'key'");
     struct_def.has_key = true;
     if (!IsScalar(field->value.type.base_type)) {
       field->required = true;

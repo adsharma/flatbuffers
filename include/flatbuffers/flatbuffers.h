@@ -31,6 +31,8 @@
 #include <algorithm>
 #include <memory>
 
+#include "flatbuffers/serialize.h"
+
 #ifdef _STLPORT_VERSION
   #define FLATBUFFERS_CPP98_STL
 #endif
@@ -197,6 +199,14 @@ template<typename T> T ReadScalar(const void *p) {
 
 template<typename T> void WriteScalar(void *p, T t) {
   *reinterpret_cast<T *>(p) = EndianScalar(t);
+}
+
+template<typename T> void ByteOrderScalar(void *p) {
+  return keyencoder::Serialize<T>(reinterpret_cast<T *>(p));
+}
+
+template<typename T> void HostOrderScalar(void *p) {
+  return keyencoder::Deserialize<T>(reinterpret_cast<T *>(p));
 }
 
 template<typename T> size_t AlignOf() {
@@ -1075,10 +1085,9 @@ FLATBUFFERS_FINAL_CLASS
   template<typename T>
   struct TableKeyComparator {
   TableKeyComparator(vector_downward& buf) : buf_(buf) {}
-    bool operator()(const Offset<T> &a, const Offset<T> &b) const {
-      auto table_a = reinterpret_cast<T *>(buf_.data_at(a.o));
-      auto table_b = reinterpret_cast<T *>(buf_.data_at(b.o));
-      return table_a->KeyCompareLessThan(table_b);
+    bool operator()(const Offset<T> & /* a */, const Offset<T> & /* b */) const {
+      // temporarily disabled
+      return false;
     }
     vector_downward& buf_;
 

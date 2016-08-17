@@ -731,7 +731,7 @@ class CppGenerator : public BaseGenerator {
           code += cpp_qualified_name + ">(" + field.name + "()->Data()); }\n";
         }
         // Generate a comparison function for this field if it is a key.
-        if (field.key) {
+        if (false) {
           code += "  bool KeyCompareLessThan(const " + struct_def.name;
           code += " *o) const { return ";
           if (field.value.type.base_type == BASE_TYPE_STRING) code += "*";
@@ -810,6 +810,95 @@ class CppGenerator : public BaseGenerator {
     }
     code += prefix + "verifier.EndTable()";
     code += ";\n  }\n";
+
+    // Byte order methods
+    code += "  void ByteOrderFields() {\n";
+    prefix = "    ";
+    for (auto it = struct_def.fields.vec.begin();
+         it != struct_def.fields.vec.end(); ++it) {
+      auto &field = **it;
+      if (!field.deprecated) {
+        switch (field.value.type.base_type) {
+          case BASE_TYPE_DOUBLE:
+          case BASE_TYPE_LONG:
+            code += prefix;
+            code += "flatbuffers::ByteOrderScalar<int64_t>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+            code += prefix;
+            code += "flatbuffers::ByteOrderScalar<double>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    code += "  }\n";
+
+    code += "  void HostOrderFields() {\n";
+    for (auto it = struct_def.fields.vec.begin();
+         it != struct_def.fields.vec.end(); ++it) {
+      auto &field = **it;
+      if (!field.deprecated) {
+        switch (field.value.type.base_type) {
+          case BASE_TYPE_DOUBLE:
+          case BASE_TYPE_LONG:
+            code += prefix;
+            code += "flatbuffers::HostOrderScalar<int64_t>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+            code += prefix;
+            code += "flatbuffers::HostOrderScalar<double>(GetAddressOf("
+                      + GenFieldOffsetName(field) + "));\n";
+            break;
+          default:
+            break;
+        }
+      }
+    }
+    code += "  }\n";
+
+    FieldDef *first_key_field, *last_key_field;
+    bool key_field_found = false;
+    for (auto it = struct_def.fields.vec.begin();
+         it != struct_def.fields.vec.end(); ++it) {
+      auto &field = **it;
+      if (!field.deprecated && field.key) {
+        first_key_field = &field;
+        key_field_found = true;
+        break;
+      }
+    }
+
+    if (key_field_found) {
+      code += "  const uint8_t *GetKey() const {\n";
+      code += prefix;
+      code += "return GetAddressOf("
+                + GenFieldOffsetName(*first_key_field) + ");\n";
+      code += "  }\n";
+
+      code += "  size_t GetKeySize() const {\n";
+      last_key_field = first_key_field;
+      for (auto it = struct_def.fields.vec.begin();
+           it != struct_def.fields.vec.end(); ++it) {
+        auto &field = **it;
+        if (!field.deprecated && field.key) {
+          last_key_field = &field;
+        }
+      }
+      code += prefix;
+      code += "return GetAddressOf("
+                + GenFieldOffsetName(*last_key_field) + ") - \n";
+      code += prefix + "  ";
+      code += "GetAddressOf("
+                + GenFieldOffsetName(*first_key_field) + ") + \n";
+      code += prefix + "  ";
+      code += "sizeof("
+                + GenTypeGet(last_key_field->value.type, "", "", "", true)
+                + ");\n";
+      code += "  }\n";
+    }
 
     if (parser_.opts.generate_object_based_api) {
       // Generate the UnPack() pre declaration.
