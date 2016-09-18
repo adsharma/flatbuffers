@@ -836,7 +836,7 @@ class CppGenerator : public BaseGenerator {
     }
     code += "  }\n";
 
-    code += "  void HostOrderFields() {\n";
+    code += "  void FlatbufferOrderFields() {\n";
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
       auto &field = **it;
@@ -845,11 +845,11 @@ class CppGenerator : public BaseGenerator {
           case BASE_TYPE_DOUBLE:
           case BASE_TYPE_LONG:
             code += prefix;
-            code += "flatbuffers::HostOrderScalar<int64_t>(GetAddressOf("
+            code += "flatbuffers::FlatbufferOrderScalar<int64_t>(GetAddressOf("
                       + GenFieldOffsetName(field) + "));\n";
             break;
             code += prefix;
-            code += "flatbuffers::HostOrderScalar<double>(GetAddressOf("
+            code += "flatbuffers::FlatbufferOrderScalar<double>(GetAddressOf("
                       + GenFieldOffsetName(field) + "));\n";
             break;
           default:

@@ -1242,9 +1242,9 @@ void KeyComparisonTest() {
   TEST_EQ((memcmp(obj2->GetKey(), obj3->GetKey(), obj2->GetKeySize()) > 0),
           true);
 
-  const_cast<kvstore::test1 *>(obj1)->HostOrderFields();
-  const_cast<kvstore::test1 *>(obj2)->HostOrderFields();
-  const_cast<kvstore::test1 *>(obj3)->HostOrderFields();
+  const_cast<kvstore::test1 *>(obj1)->FlatbufferOrderFields();
+  const_cast<kvstore::test1 *>(obj2)->FlatbufferOrderFields();
+  const_cast<kvstore::test1 *>(obj3)->FlatbufferOrderFields();
 
   TEST_EQ(obj1->obj_id(), 5);
   TEST_EQ(obj2->obj_id(), 2);

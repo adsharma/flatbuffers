@@ -205,7 +205,7 @@ template<typename T> void ByteOrderScalar(void *p) {
   return keyencoder::Serialize<T>(reinterpret_cast<T *>(p));
 }
 
-template<typename T> void HostOrderScalar(void *p) {
+template<typename T> void FlatbufferOrderScalar(void *p) {
   return keyencoder::Deserialize<T>(reinterpret_cast<T *>(p));
 }
 
