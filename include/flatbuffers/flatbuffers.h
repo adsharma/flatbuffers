@@ -429,9 +429,17 @@ template<typename T> class IVector : public Vector<T> {
 public:
   // The raw data in little endian format. Use with care.
   virtual const uint8_t *Data() const {
-    auto *offsetp = reinterpret_cast<uoffset_t *>(Vector<T>::Data());
+    const auto *offsetp = reinterpret_cast<const soffset_t *>(Vector<T>::Data());
     return Vector<T>::Data() + *offsetp;
   }
+
+protected:
+  // This class is only used to access pre-existing data. Don't ever
+  // try to construct these manually.
+  IVector();
+
+  // Relative offset from &offset_ to the data
+  soffset_t offset_;
 };
 
 // Represent a vector much like the template above, but in this case we
@@ -456,9 +464,14 @@ protected:
 
 class IVectorOfAny : public VectorOfAny {
   virtual uint8_t *Data() {
-    auto *offsetp = reinterpret_cast<uoffset_t *>(VectorOfAny::Data());
+    auto *offsetp = reinterpret_cast<soffset_t *>(VectorOfAny::Data());
     return VectorOfAny::Data() + *offsetp;
   }
+
+protected:
+  IVectorOfAny();
+
+  soffset_t offset_;
 };
 
 // Convenient helper function to get the length of any vector, regardless
