@@ -52,7 +52,9 @@ namespace flatbuffers {
   TD(STRING, "string", Offset<void>, int, int, StringOffset, int) \
   TD(VECTOR, "",       Offset<void>, int, int, VectorOffset, int) \
   TD(STRUCT, "",       Offset<void>, int, int, int, int) \
-  TD(UNION,  "",       Offset<void>, int, int, int, int)
+  TD(UNION,  "",       Offset<void>, int, int, int, int) \
+  TD(ISTRING, "",      Offset<void>, int, int, StringOffset, int) \
+  TD(IVECTOR, "",      Offset<void>, int, int, VectorOffset, int)
 
 // The fields are:
 // - enum
