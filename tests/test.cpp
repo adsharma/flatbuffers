@@ -1227,9 +1227,9 @@ void KeyComparisonTest() {
   kvstore::Finishtest1Buffer(b3, mloc);
   auto obj3 = kvstore::Gettest1(b3.GetBufferPointer());
 
-  TEST_EQ(obj1->GetKeySize(), 24);
-  TEST_EQ(obj2->GetKeySize(), 24);
-  TEST_EQ(obj3->GetKeySize(), 24);
+  TEST_EQ(obj1->GetKeySize(), 32);
+  TEST_EQ(obj2->GetKeySize(), 32);
+  TEST_EQ(obj3->GetKeySize(), 32);
 
   const_cast<kvstore::test1 *>(obj1)->ByteOrderFields();
   const_cast<kvstore::test1 *>(obj2)->ByteOrderFields();

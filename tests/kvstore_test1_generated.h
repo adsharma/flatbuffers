@@ -77,7 +77,7 @@ struct test1 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   size_t GetValueSize() const {
     return GetAddressOf(VT_MYDATA) -
       GetAddressOf(VT_NAME) +
-      sizeof(flatbuffers::String)
+      sizeof(flatbuffers::String) +
       1 * sizeof(flatbuffers::String);
   }
   std::unique_ptr<test1T> UnPack() const;

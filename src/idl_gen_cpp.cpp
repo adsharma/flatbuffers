@@ -861,7 +861,7 @@ class CppGenerator : public BaseGenerator {
 
     FieldDef *first_key_field, *last_key_field;
     FieldDef *first_val_field, *last_val_field;
-    std::vector<FieldDef *> key_string_fields;
+    std::vector<FieldDef *> key_vec_fields;
     bool key_field_found = false;
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
@@ -890,8 +890,9 @@ class CppGenerator : public BaseGenerator {
             //
             // Therefore its necessary to modify both
             // the first/last key and value.
-            if (field.value.type.base_type == BASE_TYPE_STRING) {
-              key_string_fields.push_back(&field);
+            if (field.value.type.base_type == BASE_TYPE_STRING
+                || field.value.type.base_type == BASE_TYPE_VECTOR) {
+              key_vec_fields.push_back(&field);
             }
           } else {
             if (!first_val_field) {
@@ -923,7 +924,7 @@ class CppGenerator : public BaseGenerator {
       code += "  }\n";
 
       // GetValue()
-      if (!first_val_field && key_string_fields.size() == 0) {
+      if (!first_val_field && key_vec_fields.size() == 0) {
         code += "  const uint8_t *GetValue() const {\n";
         code += prefix;
         code += "  return nullptr;";
@@ -934,8 +935,8 @@ class CppGenerator : public BaseGenerator {
         code += "  }\n";
       } else {
         FieldDef *spilled_val_field = first_val_field;
-        if (key_string_fields.size()) {
-          spilled_val_field = key_string_fields[0];
+        if (key_vec_fields.size()) {
+          spilled_val_field = key_vec_fields[0];
         }
         code += "  const uint8_t *GetValue() const {\n";
         code += prefix;
@@ -955,12 +956,12 @@ class CppGenerator : public BaseGenerator {
           code += prefix + "  ";
           code += "sizeof("
                     + GenTypeGet(last_val_field->value.type, "", "", "", true)
-                    + ")\n";
+                    + ") +\n";
           code += prefix + "  ";
-          if (!key_string_fields.size()) {
+          if (!key_vec_fields.size()) {
             code += "0;";
           } else {
-            code += std::to_string(key_string_fields.size())
+            code += std::to_string(key_vec_fields.size())
                     + " * sizeof("
                     + GenTypeGet(spilled_val_field->value.type, "", "", "", true)
                     + ");\n";
