@@ -61,8 +61,8 @@ struct test1 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return GetAddressOf(VT_OBJ_ID);
   }
   size_t GetKeySize() const {
-    return GetAddressOf(VT_SCORE) - 
-      GetAddressOf(VT_OBJ_ID) + 
+    return GetAddressOf(VT_SCORE) -
+      GetAddressOf(VT_OBJ_ID) +
       sizeof(double);
   }
   std::unique_ptr<test1T> UnPack() const;

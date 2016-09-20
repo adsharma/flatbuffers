@@ -889,10 +889,10 @@ class CppGenerator : public BaseGenerator {
       }
       code += prefix;
       code += "return GetAddressOf("
-                + GenFieldOffsetName(*last_key_field) + ") - \n";
+                + GenFieldOffsetName(*last_key_field) + ") -\n";
       code += prefix + "  ";
       code += "GetAddressOf("
-                + GenFieldOffsetName(*first_key_field) + ") + \n";
+                + GenFieldOffsetName(*first_key_field) + ") +\n";
       code += prefix + "  ";
       code += "sizeof("
                 + GenTypeGet(last_key_field->value.type, "", "", "", true)
