@@ -380,13 +380,13 @@ public:
     return const_cast<mutable_return_type>(IndirectHelper<T>::Read(Data(), i));
   }
 
-  // The raw data in little endian format. Use with care.
-  const uint8_t *Data() const {
-    return reinterpret_cast<const uint8_t *>(&length_ + 1);
+  virtual uint8_t *Data() {
+    return reinterpret_cast<uint8_t *>(&length_ + 1);
   }
 
-  uint8_t *Data() {
-    return reinterpret_cast<uint8_t *>(&length_ + 1);
+  // The raw data in little endian format. Use with care.
+  const uint8_t *Data() const {
+    return reinterpret_cast<const uint8_t *>(Data());
   }
 
   // Similarly, but typed, much like std::vector::data
@@ -425,22 +425,40 @@ private:
   }
 };
 
+template<typename T> class IVector : public Vector<T> {
+public:
+  // The raw data in little endian format. Use with care.
+  virtual const uint8_t *Data() const {
+    auto *offsetp = reinterpret_cast<uoffset_t *>(Vector<T>::Data());
+    return Vector<T>::Data() + *offsetp;
+  }
+};
+
 // Represent a vector much like the template above, but in this case we
 // don't know what the element types are (used with reflection.h).
 class VectorOfAny {
 public:
   uoffset_t size() const { return EndianScalar(length_); }
 
-  const uint8_t *Data() const {
-    return reinterpret_cast<const uint8_t *>(&length_ + 1);
-  }
-  uint8_t *Data() {
+  virtual uint8_t *Data() {
     return reinterpret_cast<uint8_t *>(&length_ + 1);
   }
+
+  const uint8_t *Data() const {
+    return reinterpret_cast<const uint8_t *>(Data());
+  }
+
 protected:
   VectorOfAny();
 
   uoffset_t length_;
+};
+
+class IVectorOfAny : public VectorOfAny {
+  virtual uint8_t *Data() {
+    auto *offsetp = reinterpret_cast<uoffset_t *>(VectorOfAny::Data());
+    return VectorOfAny::Data() + *offsetp;
+  }
 };
 
 // Convenient helper function to get the length of any vector, regardless
@@ -449,14 +467,18 @@ template<typename T> static inline size_t VectorLength(const Vector<T> *v) {
   return v ? v->Length() : 0;
 }
 
-struct String : public Vector<char> {
-  const char *c_str() const { return reinterpret_cast<const char *>(Data()); }
-  std::string str() const { return std::string(c_str(), Length()); }
+template<typename VecType>
+struct StringBase : public VecType {
+  const char *c_str() const { return reinterpret_cast<const char *>(this->Data()); }
+  std::string str() const { return std::string(c_str(), VecType::Length()); }
 
-  bool operator <(const String &o) const {
+  bool operator <(const StringBase &o) const {
     return strcmp(c_str(), o.c_str()) < 0;
   }
 };
+
+typedef struct StringBase<Vector<char>> String;
+typedef struct StringBase<IVector<char>> IString;
 
 // Simple indirection for buffer allocation, to allow this to be overridden
 // with custom allocation (see the FlatBufferBuilder constructor).
