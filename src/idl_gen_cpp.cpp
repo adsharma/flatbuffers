@@ -861,6 +861,7 @@ class CppGenerator : public BaseGenerator {
 
     FieldDef *first_key_field, *last_key_field;
     FieldDef *first_val_field, *last_val_field;
+    std::vector<FieldDef *> key_string_fields;
     bool key_field_found = false;
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
@@ -890,10 +891,7 @@ class CppGenerator : public BaseGenerator {
             // Therefore its necessary to modify both
             // the first/last key and value.
             if (field.value.type.base_type == BASE_TYPE_STRING) {
-              if (!first_val_field) {
-                first_val_field = &field;
-              }
-              last_val_field = &field;
+              key_string_fields.push_back(&field);
             }
           } else {
             if (!first_val_field) {
@@ -925,26 +923,50 @@ class CppGenerator : public BaseGenerator {
       code += "  }\n";
 
       // GetValue()
-      code += "  const uint8_t *GetValue() const {\n";
-      code += prefix;
-      code += "return GetAddressOf("
-                + GenFieldOffsetName(*first_val_field) + ");\n";
-      code += "  }\n";
-
-      // GetValueSize()
-      if (last_val_field) {
+      if (!first_val_field && key_string_fields.size() == 0) {
+        code += "  const uint8_t *GetValue() const {\n";
+        code += prefix;
+        code += "  return nullptr;";
+        code += "  }\n";
         code += "  size_t GetValueSize() const {\n";
         code += prefix;
-        code += "return GetAddressOf("
-                  + GenFieldOffsetName(*last_val_field) + ") -\n";
-        code += prefix + "  ";
-        code += "GetAddressOf("
-                  + GenFieldOffsetName(*first_val_field) + ") +\n";
-        code += prefix + "  ";
-        code += "sizeof("
-                  + GenTypeGet(last_val_field->value.type, "", "", "", true)
-                  + ");\n";
+        code += "  return 0;";
         code += "  }\n";
+      } else {
+        FieldDef *spilled_val_field = first_val_field;
+        if (key_string_fields.size()) {
+          spilled_val_field = key_string_fields[0];
+        }
+        code += "  const uint8_t *GetValue() const {\n";
+        code += prefix;
+        code += "return GetAddressOf("
+                  + GenFieldOffsetName(*spilled_val_field) + ");\n";
+        code += "  }\n";
+
+        // GetValueSize()
+        if (last_val_field) {
+          code += "  size_t GetValueSize() const {\n";
+          code += prefix;
+          code += "return GetAddressOf("
+                    + GenFieldOffsetName(*last_val_field) + ") -\n";
+          code += prefix + "  ";
+          code += "GetAddressOf("
+                    + GenFieldOffsetName(*first_val_field) + ") +\n";
+          code += prefix + "  ";
+          code += "sizeof("
+                    + GenTypeGet(last_val_field->value.type, "", "", "", true)
+                    + ")\n";
+          code += prefix + "  ";
+          if (!key_string_fields.size()) {
+            code += "0;";
+          } else {
+            code += std::to_string(key_string_fields.size())
+                    + " * sizeof("
+                    + GenTypeGet(spilled_val_field->value.type, "", "", "", true)
+                    + ");\n";
+          }
+          code += "  }\n";
+        }
       }
     }
 

@@ -3,6 +3,7 @@ namespace kvstore;
 table test1 (original_order) {
   obj_id:long (key);
   age:long (key);
+  country:string (key);
   score:double (key);
   name:string;
   mydata:string;
