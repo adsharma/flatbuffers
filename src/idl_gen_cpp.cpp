@@ -882,6 +882,19 @@ class CppGenerator : public BaseGenerator {
         if (!field.deprecated) {
           if (field.key) {
             last_key_field = &field;
+            // strings in the key field are split as
+            // follows:
+            // key: ..actual-bytes..
+            // value: <length, pointer-to-actual-bytes>
+            //
+            // Therefore its necessary to modify both
+            // the first/last key and value.
+            if (field.value.type.base_type == BASE_TYPE_STRING) {
+              if (!first_val_field) {
+                first_val_field = &field;
+              }
+              last_val_field = &field;
+            }
           } else {
             if (!first_val_field) {
               first_val_field = &field;
