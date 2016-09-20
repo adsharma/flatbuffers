@@ -860,6 +860,7 @@ class CppGenerator : public BaseGenerator {
     code += "  }\n";
 
     FieldDef *first_key_field, *last_key_field;
+    FieldDef *first_val_field, *last_val_field;
     bool key_field_found = false;
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
@@ -872,21 +873,32 @@ class CppGenerator : public BaseGenerator {
     }
 
     if (key_field_found) {
+      // Compute {first, last} x {key, val} fields
+      last_key_field = first_key_field;
+      first_val_field = last_val_field = nullptr;
+      for (auto it = struct_def.fields.vec.begin();
+           it != struct_def.fields.vec.end(); ++it) {
+        auto &field = **it;
+        if (!field.deprecated) {
+          if (field.key) {
+            last_key_field = &field;
+          } else {
+            if (!first_val_field) {
+              first_val_field = &field;
+            }
+            last_val_field = &field;
+          }
+        }
+      }
+      // GetKey()
       code += "  const uint8_t *GetKey() const {\n";
       code += prefix;
       code += "return GetAddressOf("
                 + GenFieldOffsetName(*first_key_field) + ");\n";
       code += "  }\n";
 
+      // GetKeySize()
       code += "  size_t GetKeySize() const {\n";
-      last_key_field = first_key_field;
-      for (auto it = struct_def.fields.vec.begin();
-           it != struct_def.fields.vec.end(); ++it) {
-        auto &field = **it;
-        if (!field.deprecated && field.key) {
-          last_key_field = &field;
-        }
-      }
       code += prefix;
       code += "return GetAddressOf("
                 + GenFieldOffsetName(*last_key_field) + ") -\n";
@@ -898,6 +910,29 @@ class CppGenerator : public BaseGenerator {
                 + GenTypeGet(last_key_field->value.type, "", "", "", true)
                 + ");\n";
       code += "  }\n";
+
+      // GetValue()
+      code += "  const uint8_t *GetValue() const {\n";
+      code += prefix;
+      code += "return GetAddressOf("
+                + GenFieldOffsetName(*first_val_field) + ");\n";
+      code += "  }\n";
+
+      // GetValueSize()
+      if (last_val_field) {
+        code += "  size_t GetValueSize() const {\n";
+        code += prefix;
+        code += "return GetAddressOf("
+                  + GenFieldOffsetName(*last_val_field) + ") -\n";
+        code += prefix + "  ";
+        code += "GetAddressOf("
+                  + GenFieldOffsetName(*first_val_field) + ") +\n";
+        code += prefix + "  ";
+        code += "sizeof("
+                  + GenTypeGet(last_val_field->value.type, "", "", "", true)
+                  + ");\n";
+        code += "  }\n";
+      }
     }
 
     if (parser_.opts.generate_object_based_api) {
