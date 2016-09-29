@@ -39,10 +39,12 @@ enum BaseType {
   Vector = 14,
   Obj = 15,
   Union = 16,
+  IString = 17,
+  IVector = 18,
 };
 
 inline const char **EnumNamesBaseType() {
-  static const char *names[] = { "None", "UType", "Bool", "Byte", "UByte", "Short", "UShort", "Int", "UInt", "Long", "ULong", "Float", "Double", "String", "Vector", "Obj", "Union", nullptr };
+  static const char *names[] = { "None", "UType", "Bool", "Byte", "UByte", "Short", "UShort", "Int", "UInt", "Long", "ULong", "Float", "Double", "String", "Vector", "Obj", "Union", "IString", "IVector", nullptr };
   return names;
 }
 
