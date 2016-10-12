@@ -876,7 +876,7 @@ class CppGenerator : public BaseGenerator {
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
       auto &field = **it;
-      if (!field.deprecated) {
+      if (!field.deprecated && field.key) {
         switch (field.value.type.base_type) {
           case BASE_TYPE_DOUBLE:
           case BASE_TYPE_LONG:
@@ -899,7 +899,7 @@ class CppGenerator : public BaseGenerator {
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
       auto &field = **it;
-      if (!field.deprecated) {
+      if (!field.deprecated && field.key) {
         switch (field.value.type.base_type) {
           case BASE_TYPE_DOUBLE:
           case BASE_TYPE_LONG:
