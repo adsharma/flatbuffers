@@ -56,12 +56,12 @@ struct test1 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   void ByteOrderFields() {
     flatbuffers::ByteOrderScalar<int64_t>(GetAddressOf(VT_OBJ_ID));
     flatbuffers::ByteOrderScalar<int64_t>(GetAddressOf(VT_AGE));
-    flatbuffers::ByteOrderScalar<int64_t>(GetAddressOf(VT_SCORE));
+    flatbuffers::ByteOrderScalar<double>(GetAddressOf(VT_SCORE));
   }
   void FlatbufferOrderFields() {
     flatbuffers::FlatbufferOrderScalar<int64_t>(GetAddressOf(VT_OBJ_ID));
     flatbuffers::FlatbufferOrderScalar<int64_t>(GetAddressOf(VT_AGE));
-    flatbuffers::FlatbufferOrderScalar<int64_t>(GetAddressOf(VT_SCORE));
+    flatbuffers::FlatbufferOrderScalar<double>(GetAddressOf(VT_SCORE));
   }
   const uint8_t *GetKey() const {
     return GetAddressOf(VT_OBJ_ID);

@@ -878,12 +878,12 @@ class CppGenerator : public BaseGenerator {
       auto &field = **it;
       if (!field.deprecated && field.key) {
         switch (field.value.type.base_type) {
-          case BASE_TYPE_DOUBLE:
           case BASE_TYPE_LONG:
             code += prefix;
             code += "flatbuffers::ByteOrderScalar<int64_t>(GetAddressOf("
                       + GenFieldOffsetName(field) + "));\n";
             break;
+          case BASE_TYPE_DOUBLE:
             code += prefix;
             code += "flatbuffers::ByteOrderScalar<double>(GetAddressOf("
                       + GenFieldOffsetName(field) + "));\n";
@@ -901,12 +901,12 @@ class CppGenerator : public BaseGenerator {
       auto &field = **it;
       if (!field.deprecated && field.key) {
         switch (field.value.type.base_type) {
-          case BASE_TYPE_DOUBLE:
           case BASE_TYPE_LONG:
             code += prefix;
             code += "flatbuffers::FlatbufferOrderScalar<int64_t>(GetAddressOf("
                       + GenFieldOffsetName(field) + "));\n";
             break;
+          case BASE_TYPE_DOUBLE:
             code += prefix;
             code += "flatbuffers::FlatbufferOrderScalar<double>(GetAddressOf("
                       + GenFieldOffsetName(field) + "));\n";
