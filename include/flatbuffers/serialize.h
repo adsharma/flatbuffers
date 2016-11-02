@@ -28,10 +28,11 @@ inline void Serialize(double *val) {
     mask = 1UL << 63;
   }
   int64_t buf;
-  buf = *(int64_t *) val;
+  int64_t *ivalp = (int64_t *) val;
+  buf = *ivalp;
   buf ^= mask;
   buf = (int64_t) htobe64(buf);
-  *val = buf;
+  *ivalp = buf;
 }
 
 template<typename T>

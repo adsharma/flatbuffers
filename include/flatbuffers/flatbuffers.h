@@ -432,9 +432,8 @@ private:
 template<typename T> class IVector : public Vector<T> {
 public:
   // The raw data in little endian format. Use with care.
-  virtual const uint8_t *Data() const {
-    const auto *offsetp = reinterpret_cast<const soffset_t *>(Vector<T>::Data());
-    return Vector<T>::Data() + *offsetp;
+  const uint8_t *Data() const {
+    return Vector<T>::Data() + offset_;
   }
 
 protected:
@@ -468,9 +467,8 @@ protected:
 };
 
 class IVectorOfAny : public VectorOfAny {
-  virtual uint8_t *Data() {
-    auto *offsetp = reinterpret_cast<soffset_t *>(VectorOfAny::Data());
-    return VectorOfAny::Data() + *offsetp;
+  uint8_t *Data() {
+    return VectorOfAny::Data() + offset_;
   }
 
 protected:

@@ -1265,11 +1265,12 @@ void ConformTest() {
 }
 
 void KeyComparisonTest() {
-  flatbuffers::FlatBufferBuilder b1, b2, b3;
+  flatbuffers::KVStoreBuilder b1, b2, b3;
   kvstore::test1T row1, row2, row3;
   row1.obj_id = 5;
   row1.name = "foo";
   row1.age = 23;
+  row1.country = "usa";
   row1.score = 0.7;
   row1.mydata = "abadgdsfa";
   auto mloc = kvstore::Createtest1(b1, &row1);
@@ -1281,6 +1282,7 @@ void KeyComparisonTest() {
   row2.obj_id = 2;
   row2.name = "foobar";
   row2.age = 24;
+  row2.country = "germany";
   row2.score = 0.5;
   row2.mydata = "iououoklj";
   mloc = kvstore::Createtest1(b2, &row2);
@@ -1290,12 +1292,15 @@ void KeyComparisonTest() {
   row3.obj_id = -8;
   row3.name = "baz";
   row3.age = 41;
+  row3.country = "india";
   row3.score = 0.8;
   row3.mydata = "wreqwr";
   mloc = kvstore::Createtest1(b3, &row3);
   kvstore::Finishtest1Buffer(b3, mloc);
   auto obj3 = kvstore::Gettest1(b3.GetBufferPointer());
 
+  // AlignScalar pads strings, which interferes with sorting.
+  // TODO: Get rid of alignment for key fields
   TEST_EQ(obj1->GetKeySize(), 32);
   TEST_EQ(obj2->GetKeySize(), 32);
   TEST_EQ(obj3->GetKeySize(), 32);
@@ -1316,8 +1321,22 @@ void KeyComparisonTest() {
   const_cast<kvstore::test1 *>(obj3)->FlatbufferOrderFields();
 
   TEST_EQ(obj1->obj_id(), 5);
+  TEST_EQ(obj1->age(), 23);
+  TEST_EQ(obj1->score(), 0.7);
+  TEST_EQ_STR(obj1->mydata()->c_str(), "abadgdsfa");
+  TEST_EQ_STR(obj1->name()->c_str(), "foo");
+  TEST_EQ_STR(obj1->country()->c_str(), "usa");
+  TEST_EQ(obj1->country()->size(), 3);
+
   TEST_EQ(obj2->obj_id(), 2);
+  TEST_EQ(obj2->age(), 24);
+  TEST_EQ_STR(obj2->country()->c_str(), "germany");
+  TEST_EQ(obj2->country()->size(), 7);
+
   TEST_EQ(obj3->obj_id(), -8);
+  TEST_EQ(obj3->age(), 41);
+  TEST_EQ_STR(obj3->country()->c_str(), "india");
+  TEST_EQ(obj3->country()->size(), 5);
 }
 
 int main(int /*argc*/, const char * /*argv*/[]) {

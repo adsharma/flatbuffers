@@ -4,6 +4,7 @@
 #define FLATBUFFERS_GENERATED_KVSTORETEST1_KVSTORE_H_
 
 #include "flatbuffers/flatbuffers.h"
+#include "flatbuffers/kvstore_builder.h"
 
 namespace kvstore {
 
@@ -23,17 +24,29 @@ struct test1 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_OBJ_ID = 4,
     VT_AGE = 6,
-    VT_COUNTRY = 8,
-    VT_SCORE = 10,
+    VT_SCORE = 8,
+    VT_COUNTRY = 10,
     VT_NAME = 12,
     VT_MYDATA = 14
+  };
+  // Internal
+  enum {
+    // key
+    _VT_OBJ_ID = 4,
+    _VT_AGE = 6,
+    _VT_SCORE = 8,
+
+    // value
+    _VT_COUNTRY = 4,
+    _VT_NAME = 6,
+    _VT_MYDATA = 8
   };
   int64_t obj_id() const { return GetField<int64_t>(VT_OBJ_ID, 0); }
   bool mutate_obj_id(int64_t _obj_id) { return SetField(VT_OBJ_ID, _obj_id); }
   int64_t age() const { return GetField<int64_t>(VT_AGE, 0); }
   bool mutate_age(int64_t _age) { return SetField(VT_AGE, _age); }
-  const flatbuffers::String *country() const { return GetPointer<const flatbuffers::String *>(VT_COUNTRY); }
-  flatbuffers::String *mutable_country() { return GetPointer<flatbuffers::String *>(VT_COUNTRY); }
+  const flatbuffers::IString *country() const { return reinterpret_cast<const flatbuffers::IString *>(GetAddressOf(VT_COUNTRY)); }
+  flatbuffers::IString *mutable_country() { return reinterpret_cast<flatbuffers::IString *>(GetAddressOf(VT_COUNTRY)); }
   double score() const { return GetField<double>(VT_SCORE, 0.0); }
   bool mutate_score(double _score) { return SetField(VT_SCORE, _score); }
   const flatbuffers::String *name() const { return GetPointer<const flatbuffers::String *>(VT_NAME); }
@@ -80,31 +93,31 @@ struct test1 FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
       sizeof(flatbuffers::String) +
       1 * sizeof(flatbuffers::String);
   }
-  std::unique_ptr<test1T> UnPack() const;
+  test1T *UnPack(const flatbuffers::resolver_function_t *resolver = nullptr) const;
 };
 
 struct test1Builder {
-  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::KVStoreBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_obj_id(int64_t obj_id) { fbb_.AddElement<int64_t>(test1::VT_OBJ_ID, obj_id, 0); }
-  void add_age(int64_t age) { fbb_.AddElement<int64_t>(test1::VT_AGE, age, 0); }
-  void add_country(flatbuffers::Offset<flatbuffers::String> country) { fbb_.AddOffset(test1::VT_COUNTRY, country); }
-  void add_score(double score) { fbb_.AddElement<double>(test1::VT_SCORE, score, 0.0); }
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) { fbb_.AddOffset(test1::VT_NAME, name); }
-  void add_mydata(flatbuffers::Offset<flatbuffers::String> mydata) { fbb_.AddOffset(test1::VT_MYDATA, mydata); }
-  test1Builder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
+  void add_obj_id(int64_t obj_id) { fbb_.AddKeyElement<int64_t>(test1::_VT_OBJ_ID, obj_id, 0); }
+  void add_age(int64_t age) { fbb_.AddKeyElement<int64_t>(test1::_VT_AGE, age, 0); }
+  void add_country(const std::string& country) { fbb_.AddKeyElement(test1::_VT_COUNTRY, country, std::string()); }
+  void add_score(double score) { fbb_.AddKeyElement<double>(test1::_VT_SCORE, score, 0.0); }
+  void add_name(flatbuffers::Offset<flatbuffers::String> name) { fbb_.AddOffset(test1::_VT_NAME, name); }
+  void add_mydata(flatbuffers::Offset<flatbuffers::String> mydata) { fbb_.AddOffset(test1::_VT_MYDATA, mydata); }
+  test1Builder(flatbuffers::KVStoreBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   test1Builder &operator=(const test1Builder &);
   flatbuffers::Offset<test1> Finish() {
     auto o = flatbuffers::Offset<test1>(fbb_.EndTable(start_, 6));
-    fbb_.Required(o, test1::VT_COUNTRY);  // country
+    //fbb_.Required(o, test1::VT_COUNTRY);  // country
     return o;
   }
 };
 
-inline flatbuffers::Offset<test1> Createtest1(flatbuffers::FlatBufferBuilder &_fbb,
+inline flatbuffers::Offset<test1> Createtest1(flatbuffers::KVStoreBuilder &_fbb,
     int64_t obj_id = 0,
     int64_t age = 0,
-    flatbuffers::Offset<flatbuffers::String> country = 0,
+    const std::string& country = "",
     double score = 0.0,
     flatbuffers::Offset<flatbuffers::String> name = 0,
     flatbuffers::Offset<flatbuffers::String> mydata = 0) {
@@ -118,19 +131,20 @@ inline flatbuffers::Offset<test1> Createtest1(flatbuffers::FlatBufferBuilder &_f
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<test1> Createtest1Direct(flatbuffers::FlatBufferBuilder &_fbb,
+inline flatbuffers::Offset<test1> Createtest1Direct(flatbuffers::KVStoreBuilder &_fbb,
     int64_t obj_id = 0,
     int64_t age = 0,
     const char *country = nullptr,
     double score = 0.0,
     const char *name = nullptr,
     const char *mydata = nullptr) {
-  return Createtest1(_fbb, obj_id, age, country ? _fbb.CreateString(country) : 0, score, name ? _fbb.CreateString(name) : 0, mydata ? _fbb.CreateString(mydata) : 0);
+  return Createtest1(_fbb, obj_id, age, country, score, name ? _fbb.CreateValueString(name) : 0, mydata ? _fbb.CreateValueString(mydata) : 0);
 }
 
-inline flatbuffers::Offset<test1> Createtest1(flatbuffers::FlatBufferBuilder &_fbb, const test1T *_o);
+inline flatbuffers::Offset<test1> Createtest1(flatbuffers::KVStoreBuilder &_fbb, const test1T *_o, const flatbuffers::rehasher_function_t *rehasher = nullptr);
 
-inline std::unique_ptr<test1T> test1::UnPack() const {
+inline test1T *test1::UnPack(const flatbuffers::resolver_function_t *resolver) const {
+  (void)resolver;
   auto _o = new test1T();
   { auto _e = obj_id(); _o->obj_id = _e; };
   { auto _e = age(); _o->age = _e; };
@@ -138,26 +152,39 @@ inline std::unique_ptr<test1T> test1::UnPack() const {
   { auto _e = score(); _o->score = _e; };
   { auto _e = name(); if (_e) _o->name = _e->str(); };
   { auto _e = mydata(); if (_e) _o->mydata = _e->str(); };
-  return std::unique_ptr<test1T>(_o);
+  return _o;
 }
 
-inline flatbuffers::Offset<test1> Createtest1(flatbuffers::FlatBufferBuilder &_fbb, const test1T *_o) {
+inline flatbuffers::Offset<test1> Createtest1(flatbuffers::KVStoreBuilder &_fbb, const test1T *_o, const flatbuffers::rehasher_function_t *rehasher) {
+  (void)rehasher;
   return Createtest1(_fbb,
     _o->obj_id,
     _o->age,
-    _fbb.CreateString(_o->country),
+    _o->country,
     _o->score,
-    _o->name.size() ? _fbb.CreateString(_o->name) : 0,
-    _o->mydata.size() ? _fbb.CreateString(_o->mydata) : 0);
+    _o->name.size() ? _fbb.CreateValueString(_o->name) : 0,
+    _o->mydata.size() ? _fbb.CreateValueString(_o->mydata) : 0);
 }
 
-inline const kvstore::test1 *Gettest1(const void *buf) { return flatbuffers::GetRoot<kvstore::test1>(buf); }
+inline const kvstore::test1 *Gettest1(const void *buf) {
+  return flatbuffers::GetRoot<kvstore::test1>(buf);
+}
 
-inline test1 *GetMutabletest1(void *buf) { return flatbuffers::GetMutableRoot<test1>(buf); }
+inline test1 *GetMutabletest1(void *buf) {
+  return flatbuffers::GetMutableRoot<test1>(buf);
+}
 
-inline bool Verifytest1Buffer(flatbuffers::Verifier &verifier) { return verifier.VerifyBuffer<kvstore::test1>(nullptr); }
+inline bool Verifytest1Buffer(flatbuffers::Verifier &verifier) {
+  return verifier.VerifyBuffer<kvstore::test1>(nullptr);
+}
 
-inline void Finishtest1Buffer(flatbuffers::FlatBufferBuilder &fbb, flatbuffers::Offset<kvstore::test1> root) { fbb.Finish(root); }
+inline void Finishtest1Buffer(flatbuffers::KVStoreBuilder &fbb, flatbuffers::Offset<kvstore::test1> root) {
+  fbb.Finish(root);
+}
+
+inline std::unique_ptr<test1T> UnPacktest1(const void *buf, const flatbuffers::resolver_function_t *resolver = nullptr) {
+  return std::unique_ptr<test1T>(Gettest1(buf)->UnPack(resolver));
+}
 
 }  // namespace kvstore
 
