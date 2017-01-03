@@ -1299,11 +1299,9 @@ void KeyComparisonTest() {
   kvstore::Finishtest1Buffer(b3, mloc);
   auto obj3 = kvstore::Gettest1(b3.GetBufferPointer());
 
-  // AlignScalar pads strings, which interferes with sorting.
-  // TODO: Get rid of alignment for key fields
-  TEST_EQ(obj1->GetKeySize(), 32);
+  TEST_EQ(obj1->GetKeySize(), 28);
   TEST_EQ(obj2->GetKeySize(), 32);
-  TEST_EQ(obj3->GetKeySize(), 32);
+  TEST_EQ(obj3->GetKeySize(), 30);
 
   const_cast<kvstore::test1 *>(obj1)->ByteOrderFields();
   const_cast<kvstore::test1 *>(obj2)->ByteOrderFields();

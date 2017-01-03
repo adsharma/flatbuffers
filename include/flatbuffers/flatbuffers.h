@@ -431,7 +431,6 @@ private:
 
 template<typename T> class IVector : public Vector<T> {
 public:
-  // The raw data in little endian format. Use with care.
   const uint8_t *Data() const {
     return Vector<T>::Data() + offset_;
   }
@@ -658,8 +657,8 @@ FLATBUFFERS_FINAL_CLASS
   explicit FlatBufferBuilder(uoffset_t initial_size = 1024,
                              const simple_allocator *allocator = nullptr)
       : buf_(initial_size, allocator ? *allocator : default_allocator),
-        nested(false), finished(false), minalign_(1), force_defaults_(false),
-        string_pool(nullptr) {
+        nested(false), finished(false), align_(true), minalign_(1),
+        force_defaults_(false), string_pool(nullptr) {
     offsetbuf_.reserve(16);  // Avoid first few reallocs.
     vtables_.reserve(16);
     EndianCheck();
@@ -739,7 +738,10 @@ FLATBUFFERS_FINAL_CLASS
   /// @cond FLATBUFFERS_INTERNAL
   void Pad(size_t num_bytes) { buf_.fill(num_bytes); }
 
+  void setAlign(bool align) { align_ = align; }
+
   void Align(size_t elem_size) {
+    if (!align_) return;
     if (elem_size > minalign_) minalign_ = elem_size;
     buf_.fill(PaddingBytes(buf_.size(), elem_size));
   }
@@ -1275,6 +1277,7 @@ FLATBUFFERS_FINAL_CLASS
 
   std::vector<uoffset_t> vtables_;  // todo: Could make this into a map?
 
+  bool align_;
   size_t minalign_;
 
   bool force_defaults_;  // Serialize values equal to their defaults anyway.

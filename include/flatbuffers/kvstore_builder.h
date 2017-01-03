@@ -35,7 +35,9 @@ class KVStoreBuilder {
   explicit KVStoreBuilder(uoffset_t initial_size = 1024,
                           const simple_allocator *allocator = nullptr)
   : key_builder_(initial_size, allocator)
-  , value_builder_(initial_size, allocator) {}
+  , value_builder_(initial_size, allocator) {
+    key_builder_.setAlign(false);
+  }
 
   void Clear() {
     key_builder_.Clear();
