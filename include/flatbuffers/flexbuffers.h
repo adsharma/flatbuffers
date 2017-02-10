@@ -184,6 +184,27 @@ static BitWidth WidthF(double f) {
                                                          : BIT_WIDTH_64;
 }
 
+class String;
+class Blob;
+class Vector;
+class TypedVector;
+class FixedTypedVector;
+class Map;
+class Reference;
+
+class ObjectVisitor {
+ public:
+  ObjectVisitor() {}
+
+  void visitString(String& /* s */) {}
+  void visitBlob(Blob& /* b */) {}
+  void visitVector(Vector& /* v */) {}
+  void visitTypedVector(TypedVector& /* v */) {}
+  void visitFixedTypedVector(FixedTypedVector& /* v */) {}
+  void visitMap(Map& /* m */) {}
+  void visitReference(Reference& /* r */) {}
+};
+
 // Base class of all types below.
 // Points into the data buffer and allows access to one type.
 class Object {
@@ -191,6 +212,7 @@ class Object {
   Object(const uint8_t *data, uint8_t byte_width)
     : data_(data), byte_width_(byte_width) {}
 
+  void accept(const ObjectVisitor& /* v */) {}
  protected:
   const uint8_t *data_;
   uint8_t byte_width_;
@@ -218,6 +240,9 @@ class String : public Sized {
     return String(empty_string + 1, 1);
   }
   bool IsTheEmptyString() const { return data_ == EmptyString().data_; }
+  void accept(ObjectVisitor& v) {
+    v.visitString(*this);
+  }
 };
 
 class Blob : public Sized {
@@ -230,6 +255,9 @@ class Blob : public Sized {
     return Blob(empty_blob + 1, 1);
   }
   bool IsTheEmptyBlob() const { return data_ == EmptyBlob().data_; }
+  void accept(ObjectVisitor& v) {
+    v.visitBlob(*this);
+  }
 };
 
 class Vector : public Sized {
@@ -260,6 +288,9 @@ class TypedVector : public Sized {
   bool IsTheEmptyVector() const {
     return data_ == TypedVector::EmptyTypedVector().data_;
   }
+  void accept(ObjectVisitor& v) {
+    v.visitTypedVector(*this);
+  }
 
   Type ElementType() { return type_; }
 
@@ -283,6 +314,9 @@ class FixedTypedVector : public Object {
   }
   bool IsTheEmptyFixedTypedVector() const {
     return data_ == FixedTypedVector::EmptyFixedTypedVector().data_;
+  }
+  void accept(ObjectVisitor& v) {
+    v.visitFixedTypedVector(*this);
   }
 
   Type ElementType() { return type_; }
@@ -321,6 +355,10 @@ class Map : public Vector {
 
   bool IsTheEmptyMap() const {
     return data_ == EmptyMap().data_;
+  }
+
+  void accept(ObjectVisitor& v) {
+    v.visitMap(*this);
   }
 };
 
